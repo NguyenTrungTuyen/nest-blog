@@ -4,18 +4,19 @@ import { UsersController } from './users.controller';
 import { BlogModule } from '../../databases/blog_module.schema';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigService } from '@nestjs/config';
-
+import { JwtStrategy } from './auth/jwt.strategy';
 
 @Module({
   imports: [
-    BlogModule, PassportModule.register({ defaultStrategy: 'jwt' }), // QUAN TRỌNG
+    BlogModule, 
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: '6747c16d-1f9c-4a32-b3e8-91fb1e641aaa',
+      secret: 'your_jwt_secret',
       signOptions: { expiresIn: '1d' },
     }),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService,JwtStrategy],
+  exports: [ PassportModule, JwtModule],
 })
 export class UsersModule {}

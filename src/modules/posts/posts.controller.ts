@@ -2,13 +2,16 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { LocalAuthGuard } from '../common/local-auth.guard';
+import { JwtAuthGuard } from '../users/auth/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Posts') 
 @Controller('posts')
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
-
-  @UseGuards(LocalAuthGuard) // Use LocalAuthGuard to protect the route
+  
+  @UseGuards(JwtAuthGuard) // Use LocalAuthGuard to protect the route
+  @ApiBearerAuth('jwt')
   @Post()
   create(@Body() createPostDto: CreatePostDto) {
     return this.postsService.create(createPostDto);
