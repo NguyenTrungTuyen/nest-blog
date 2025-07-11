@@ -1,25 +1,25 @@
 import { ApiProperty } from "@nestjs/swagger";
-import {  IsNotEmpty, IsOptional, Max, MinLength } from "class-validator"
+import {  IsArray, IsNotEmpty, IsOptional, IsString, Max, MinLength } from "class-validator"
 
 export class CreatePostDto {
-    @ApiProperty({description: 'ID tác giả/ chuwa co login/', example: '60c72b2f9b1d4c001c8e4f3a'})
-    @IsNotEmpty({message:"ID không được để trống!"})
-    author:string;
-
-    @ApiProperty({ example: 'Post Title' , description: 'Tiêu đề bài viết'})
-    @MinLength(1, { message: 'Tên bài viết phải có ít nhất 1 ký tự' })
-    @Max(255, { message: 'Tên bài viết không được quá 255 ký tự' })
+   
+    @ApiProperty({ example: 'Post Title' , description: 'Bài viết '})
     @IsNotEmpty({message:"Tiêu đề không được để trống!"})
+    @IsString()
     title: string;
 
-    @ApiProperty({ example: 'This is the content of the post.' , description: 'Nội dung bài viết'})
+    @ApiProperty({ example: 'Nội dung.........' , description: 'Nội dung bài viết'})
+    @IsNotEmpty({message:"Nội dung không được để trống!"})
+    @IsString()
     content:string;
 
-    @ApiProperty({ example: 'tag1, tag2', description: 'Danh sách các thẻ phân loại bài viết'})
+    @ApiProperty({ example: '["tag1", "tag2"]', description: 'Danh sách các thẻ phân loại bài viết', isArray: true  })
     @IsOptional()
-    tags?:string;
+    @IsArray()
+    @IsString({ each: true }) // mỗi phần tử phải là string
+    tags?: string[];
 
-    @ApiProperty({  description: 'URL hình ảnh đại diện cho bài viết// chuwa xong'})
+    @ApiProperty({  description: 'URL hình ảnh đại diện cho bài viết// chuwa xong', required: false })
     @IsOptional()
     image?:string;
 }

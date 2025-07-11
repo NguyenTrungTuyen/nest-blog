@@ -36,7 +36,7 @@ async create(createUserDto: CreateUserDto) {
     }
 
     // Hash password 
-    const hashedPassword = await hashPasswordHelper(password) ; // Giả sử password đã được hash trước đó, nếu cần có thể sử dụng bcrypt hoặc thư viện khác để hash
+    const hashedPassword = await hashPasswordHelper(password) ; 
 
     //create user
     const user = await this.userModel.create({
@@ -80,13 +80,10 @@ async create(createUserDto: CreateUserDto) {
   // danh sach user, phan trang, tim kiem
  async findAll( query : UserQueryDto) {
    const { search, page = '1', limit = '10' } = query;
-
    const filter : any = {};
-
     if (search) {
       filter.name = { $regex: search, $options: 'i' }; // Tìm kiếm không phân biệt chữ hoa chữ thường
     }
-
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
     const skip = (pageNumber - 1) * limitNumber;

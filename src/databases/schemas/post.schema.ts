@@ -13,8 +13,8 @@ export class Post extends Document {
     @Prop({ required: true })
     content: string;
 
-    @Prop({ default: null })
-    tags: string;
+    @Prop({type:[String], default: [] })// mảng tags
+    tags: string[];
 
     @Prop({ default: null })
     image?: string; 

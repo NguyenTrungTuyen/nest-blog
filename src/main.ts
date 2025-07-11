@@ -34,7 +34,7 @@ async function bootstrap() {
   // app.setGlobalPrefix('api/v1', { exclude: ['']}); // Xét tiền tố, trừ route gốc /.
 
   await app.listen(port);
-  console.log(`Server is running on:http://localhost:${port}`);
+  console.log(`API Server is running on:http://localhost:${port}/Api`);
     console.log ("PORT:", configService.get<number>('PORT'));
   console.log ("DB:",configService.get<string>('MONGODB_URI'));
   
