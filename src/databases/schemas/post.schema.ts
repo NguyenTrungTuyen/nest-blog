@@ -5,7 +5,7 @@ import { Document, Types } from 'mongoose';
 @Schema({ timestamps: true})
 export class Post extends Document {
     @Prop({type: Types.ObjectId,ref:'User',required: true})
-    author: string;
+    author: Types.ObjectId;
     
     @Prop({ required: true, unique: true })
     title: string;

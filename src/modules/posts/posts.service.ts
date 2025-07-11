@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Post } from 'src/databases/schemas/post.schema';
 import { PostQueryDto } from './dto/get_post.dto';
 import { User } from 'src/databases/schemas/user.schema';
@@ -34,7 +34,7 @@ export class PostsService {
 
     // create post
     const post = await this.postModel.create({
-      title, content, tags, image, author: authorId
+      title, content, tags, image, author: new Types.ObjectId(authorId)
     });
 
     console.log("Tạo bài viết thành công!");
@@ -52,119 +52,167 @@ export class PostsService {
   }
 
   // danh sach bai viet theo tagname, authorName, page, limit
-//  async findAll(query: PostQueryDto) {
-//     const { authorName, tagName, page = '1', limit = '10' } = query;
-//     const filter: any = {};
+ async findAll(query: PostQueryDto) {
+    const { authorName, tagName, page = '1', limit = '10' } = query;
+    const filter: any = {};
+    if(authorName){
+      const authors = await this.userModel.find({
+        name:{ $regex: authorName, $options: 'i' } 
+      }).select('_id');
 
-//     if(authorName){
-//       const authors = await this.userModel.find({
-//         name:{ $regex: authorName, $options: 'i' } // Tìm kiếm không phân biệt chữ hoa chữ thường
-//       }).select('_id').exec();
+      const authorIds = authors.map(user => user._id);
+      // return authorIds;
 
-//       const authorIds = authors.map(author => author._id);
-//       filter.author = { $in: authorIds }; // Lọc theo ID của tác giả
-//     }
+      // filter.author = { $in: authorIds.map(id => new Types.ObjectId(id as string)) };
 
-
-//     if (tagName) {
-//       filter.tags = { $regex: tagName, $options: 'i' }; // Tìm kiếm không phân biệt chữ hoa chữ thường
-//     }
-//     const skip = (parseInt(page) - 1) * parseInt(limit);
-//     const [ posts, total] = await Promise.all([
-//       this.postModel.find(filter)
-//       .skip(skip)
-//       .limit(parseInt(limit))
-//       .populate('author', 'name email'),
+      filter.author = { $in: authorIds }; 
+      // return filter.author
       
-//       this.postModel.countDocuments(filter).exec()
-//     ]);
-
-//    return {
-//     data: posts.map(post => ({
-//       _id: post._id,
-//       title: post.title,
-//       content: post.content,
-//       tags: post.tags,
-//       image: post.image,
-//       author: typeof post.author === 'object' && post.author !== null && 'name' in post.author
-//         ? (post.author as any).name
-//         : 'Không rõ',
-//     })),
-//     pagination: {
-//       total,
-//       page: +page,
-//       limit: +limit,
-//       totalPages: Math.ceil(total / +limit),
-//     },
-//   };
-//   }
-async findAll(query: PostQueryDto) {
-  const { authorName, tagName, page = '1', limit = '10' } = query;
-  const filter: any = {};
-
-  // Xử lý tìm kiếm theo tên tác giả
-  if (authorName) {
-    const cleanedAuthorName = authorName.trim();
-    const authors = await this.userModel
-      .find({
-        name: { $regex: cleanedAuthorName, $options: 'i' },
-      })
-      .select('_id')
-      .exec();
-    const authorIds = authors.map((author) => author._id);
-    if (authorIds.length === 0) {
-      throw new Error('Không tìm thấy tác giả với tên này');
+      //   filter.author = '686f7c057f08cbf10c583509';
     }
-    filter.author = { $in: authorIds };
-  }
 
-  // Xử lý tìm kiếm theo tag
-  if (tagName) {
-    filter.tags = { $elemMatch: { $regex: tagName, $options: 'i' } };
-  }
+    if (tagName) {
+      filter.tags = { $regex: tagName, $options: 'i' }; 
+    }
 
-  // Xử lý phân trang
-  const pageNum = isNaN(parseInt(page)) ? 1 : parseInt(page);
-  const limitNum = isNaN(parseInt(limit)) ? 10 : parseInt(limit);
-  const skip = (pageNum - 1) * limitNum;
-
-  // Truy vấn bài post và tổng số
-  const [posts, total] = await Promise.all([
-    this.postModel
-      .find(filter)
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    const [ posts, total] = await Promise.all([
+      this.postModel.find(filter)
       .skip(skip)
-      .limit(limitNum)
+      .limit(parseInt(limit))
       .populate('author', 'name email'),
-    this.postModel.countDocuments(filter).exec(),
+      
+      this.postModel.countDocuments(filter).exec()
+    ]);
+
+    if(posts.length === 0){
+      return { message: "Không có bài viết phù hợp", filter };
+    };
+   
+    return {posts,pagination: {
+      total,
+      page: +page,
+      limit: +limit,
+      totalPages: Math.ceil(total / +limit),
+    }}
+  }
+
+
+//  async findOne(id: string) {
+//    if (!Types.ObjectId.isValid(id)) {
+//       throw new BadRequestException("ID không hợp lệ")
+//     }
+//     const post = await this.postModel.findById(id)
+//     .populate('author', 'name')
+//     // .populate('comment','content' )
+//     .exec()
+//     if (!post) {
+//       throw new NotFoundException("Không tìm thấy!")
+//     }
+//     return post;
+//   }
+  
+
+// async findOne(id: string){
+  
+//   const posts = await this.postModel.aggregate([
+//   {
+//     $match: { _id: new Types.ObjectId(id) }
+//   },
+//   {
+//     $lookup: {
+//       from: 'comments',          // tên collection comment
+//       localField: '_id',
+//       foreignField: 'post',
+//       as: 'comment'
+//     }
+//   },
+//   {
+//     $lookup: {
+//       from: 'users',
+//       localField: 'author',
+//       foreignField: '_id',
+//       as: 'author'
+//     }
+//   },
+//   {
+//     $unwind: '$author'
+//   }
+// ]);
+
+// return posts;
+// }
+
+async findOne(id: string) {
+  const posts = await this.postModel.aggregate([
+    {
+      $match: { _id: new Types.ObjectId(id) }
+    },
+    // Lấy thông tin tác giả bài viết
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'author',
+        foreignField: '_id',
+        as: 'author'
+      }
+    },
+    { $unwind: '$author' },
+    // Lấy comments theo bài viết
+    {
+      $lookup: {
+        from: 'comments',
+        localField: '_id',
+        foreignField: 'post',
+        as: 'comments'
+      }
+    },
+    
+    //Lấy tác giả của mỗi comment
+    {
+      $unwind: {
+        path: '$comments',
+        preserveNullAndEmptyArrays: true // để tránh lỗi nếu bài viết chưa có comment
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'comments.author',
+        foreignField: '_id',
+        as: 'comments.authorInfo'
+      }
+    },
+    {
+      $unwind: {
+        path: '$comments.authorInfo',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    // Nhét authorInfo vào comment
+    {
+      $addFields: {
+        'comments.author': '$comments.authorInfo'
+      }
+    },
+    // Gom lại comment sau khi unwind
+    {
+      $group: {
+        _id: '$_id',
+        title: { $first: '$title' },
+        content: { $first: '$content' },
+        author: { $first: '$author' },
+        comments: { $push: '$comments' }
+      }
+    }
   ]);
 
-  // Trả về kết quả
-  return {
-    data: posts.map((post) => ({
-      _id: post._id,
-      title: post.title,
-      content: post.content,
-      tags: post.tags,
-      image: post.image,
-      author:
-        typeof post.author === 'object' &&
-        post.author !== null &&
-        'name' in post.author
-          ? (post.author as any).name
-          : 'Không rõ',
-    })),
-    pagination: {
-      total,
-      page: pageNum,
-      limit: limitNum,
-      totalPages: Math.ceil(total / limitNum),
-    },
-  };
+  return posts || null;
 }
 
-  findOne(id: number) {
-    return `This action returns a #${id} post`;
-  }
+ 
+
 
   update(id: number, updatePostDto: UpdatePostDto) {
     return `This action updates a #${id} post`;

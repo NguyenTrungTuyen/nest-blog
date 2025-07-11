@@ -128,7 +128,7 @@ User
  API lấy danh sách users (GET /users)
 
  Schema-level validation: email phải là duy nhất
-
+================================
 Post
  API tạo bài viết mới (POST /posts)
 
@@ -141,7 +141,6 @@ Pagination: ?page=1&limit=10
 Filter theo author hoặc tag
 
 populate() author
-
  API lấy 1 bài viết chi tiết (GET /posts/:id)
 
 populate() comment và author
@@ -152,6 +151,7 @@ Comment
 pre('save'): kiểm tra nội dung không rỗng
 
  API lấy danh sách comment của bài viết (GET /posts/:id/comments)
+================================
 
 populate() author
 

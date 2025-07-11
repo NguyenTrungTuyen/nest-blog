@@ -16,6 +16,7 @@ export class PostsController {
   @Post()
   create(@Body() createPostDto: CreatePostDto, @Request() req: any) {
     const authorId = req.user.userId; 
+    console.log(authorId);
     return this.postsService.create(createPostDto, authorId);
   }
 
@@ -32,8 +33,9 @@ export class PostsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.postsService.findOne(+id);
+  @ApiOperation({ summary: "Lấy thông tin post theo ID" })
+  async findOne(@Param('id') id: string) {
+    return this.postsService.findOne(id);
   }
 
   @Patch(':id')
